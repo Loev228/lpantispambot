@@ -34,8 +34,8 @@ public class AntiSpamLPbot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update newUpdate) {
-        LOGGER.debug("AYE");
         update = newUpdate;
+        update.getMessage().getNewChatMembers().forEach(this::addNewUserToSuspectUsers);
         if (!update.hasMessage()) {
             LOGGER.debug("No Message.");
             return;
@@ -56,12 +56,12 @@ public class AntiSpamLPbot extends TelegramLongPollingBot {
                 }
             }
         }
-        update.getMessage().getNewChatMembers().forEach(this::addNewUserToSuspectUsers);
     }
 
     private Boolean isGuiltyContent() {
-        //todo: guilty searcher logic
-        return true;
+        Boolean isPhoto = isPhoto();
+        LOGGER.info("isPhoto: {}", isPhoto);
+        return isPhoto;
     }
 
     private void banUser(Long userId) {
@@ -93,7 +93,11 @@ public class AntiSpamLPbot extends TelegramLongPollingBot {
             suspectUsers.remove(suspectUser);
         }
         LOGGER.info("Is Has Text: {}, Is Suspect Time Ended: {}", isHasText, isSuspectTimeEnded);
-        return isHasText && !isSuspectTimeEnded;
+        return (isHasText || isPhoto()) && !isSuspectTimeEnded;
+    }
+
+    private boolean isPhoto() {
+        return update.getMessage().hasPhoto();
     }
 
     @Override
