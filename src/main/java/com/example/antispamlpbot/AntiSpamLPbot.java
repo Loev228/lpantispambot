@@ -11,12 +11,12 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
 import java.time.Instant;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 
 
 @Component
@@ -35,22 +35,35 @@ public class AntiSpamLPbot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
 
         //String userName = update.getMessage().getFrom().getUserName();
-        long messageTime = update.getMessage().getDate();
-        long suspectMessageTime;
-        if(update.hasMessage() )  {
+        Integer messageTime = update.getMessage().getDate();
+        Integer suspectMessageTime = 0;
+        if (update.hasMessage()) {
             long suspectUserId = update.getMessage().getFrom().getId();
-            for (SuspectUser suspectUser:suspectUsers) {
+            for (SuspectUser suspectUser : suspectUsers) {
                 if (suspectUser.getId() == suspectUserId)
-                    suspectMessageTime =messageTime;
+                    suspectMessageTime = messageTime;
             }
-            if(update.getMessage().hasText() && (update.getMessage().getDate() - suspectMessageTime) )
+
             List<User> users = update.getMessage().getNewChatMembers();
             System.out.println("Хуета от телеги" + users);
-            for(int i=0; i<users.size(); ++i) {
+            for (int i = 0; i < users.size(); ++i) {
                 SuspectUser temp = new SuspectUser(users.get(i).getId(), Instant.now().getEpochSecond());
 
                 suspectUsers.add(temp);
                 System.out.println("наша хуета:" + temp);
+            }
+            if (update.getMessage().hasText() && (update.getMessage().getDate() - suspectMessageTime) < 10) {
+                String chatId = update.getMessage().getChatId().toString();
+                Integer messageId = update.getMessage().getMessageId();
+                DeleteMessage deleteMessage = new DeleteMessage(chatId, messageId);
+                BanChatMember banChatMember = new BanChatMember(chatId, suspectUserId);
+                try {
+                    execute(deleteMessage);
+                    execute(banChatMember);
+                } catch (TelegramApiException e) {
+                    //todo add logging to the project.
+                    e.printStackTrace();
+                }
             }
 
             System.out.println(suspectUsers);
@@ -58,17 +71,11 @@ public class AntiSpamLPbot extends TelegramLongPollingBot {
             SendMessage sm = new SendMessage();
             Long userId = update.getMessage().getFrom().getId();
 
-            BanChatMember banChatMember = new BanChatMember(chatId,userId);
+
             sm.setChatId(chatId);
             sm.setText("bukinpidor");
-//
-//           try {
-//                execute(sm);
-//
-//            } catch (TelegramApiException e) {
-//                //todo add logging to the project.
-//                e.printStackTrace();
-//            }
+
+
         }
     }
 

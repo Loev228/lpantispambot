@@ -9,9 +9,9 @@ import java.util.Date;
 @Data
 public class SuspectUser {
     private Long  id;
-    private long joinDate;
+    private Long joinDate;
 
-    public SuspectUser(Long id, long joinDate) {
+    public SuspectUser(Long id, Long joinDate) {
         this.id = id;
         this.joinDate = joinDate;
     }
