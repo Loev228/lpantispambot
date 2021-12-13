@@ -19,7 +19,7 @@ import java.util.List;
 @Component
 public class AntiSpamLPbot extends TelegramLongPollingBot {
     private static final Logger LOGGER = LoggerFactory.getLogger(AntiSpamLPbot.class);
-    private static final Integer SUSPECT_PERIOD = 60;
+    private static final Integer SUSPECT_PERIOD = 30;
     private static final String ANTI_SPAM_LP_BOT = "AntiSpamLPbot";
 
     @Value("${AntiSpamLPbot.username}")
@@ -61,7 +61,11 @@ public class AntiSpamLPbot extends TelegramLongPollingBot {
     private Boolean isGuiltyContent() {
         Boolean isPhoto = isPhoto();
         LOGGER.info("isPhoto: {}", isPhoto);
-        return isPhoto;
+        Boolean isLink = isLink();
+        LOGGER.info("isLink: {}", isLink);
+        Boolean isNoGreetings = isNoGreetings();
+        LOGGER.info("isNoGreetings: {}", isNoGreetings);
+        return isPhoto || isLink || isNoGreetings;
     }
 
     private void banUser(Long userId) {
@@ -93,11 +97,21 @@ public class AntiSpamLPbot extends TelegramLongPollingBot {
             suspectUsers.remove(suspectUser);
         }
         LOGGER.info("Is Has Text: {}, Is Suspect Time Ended: {}", isHasText, isSuspectTimeEnded);
-        return (isHasText || isPhoto()) && !isSuspectTimeEnded;
+        return (isHasText || isLink() || isPhoto()) && !isSuspectTimeEnded;
     }
 
     private boolean isPhoto() {
         return update.getMessage().hasPhoto();
+    }
+
+    private boolean isLink() {
+        return update.getMessage().getText().contains("http");
+    }
+
+    private boolean isNoGreetings() {
+        String firstName = update.getMessage().getFrom().getFirstName();
+        String lastName = update.getMessage().getFrom().getLastName();
+        return !(update.getMessage().getText().contains(firstName) || update.getMessage().getText().contains(lastName));
     }
 
     @Override
